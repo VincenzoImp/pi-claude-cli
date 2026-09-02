@@ -17,7 +17,7 @@ import type { ChildProcess } from "node:child_process";
  * Spawn a Claude CLI subprocess with all required flags for stream-json communication.
  *
  * @param modelId - The model ID to pass via --model flag
- * @param systemPrompt - Optional system prompt appended via --append-system-prompt
+ * @param systemPrompt - Optional system prompt appended via --append-system-prompt-file
  * @param options - Optional cwd, AbortSignal, and effort level
  * @returns The spawned ChildProcess with piped stdin/stdout/stderr
  */
@@ -56,14 +56,19 @@ export function spawnClaude(
   }
 
   if (systemPrompt) {
-    // Write system prompt to a temp file to avoid ENAMETOOLONG on Windows.
-    // Claude CLI's --append-system-prompt accepts a file path or literal text.
+    // Write the system prompt to a temp file rather than passing it inline: a pi system
+    // prompt carrying context files and skill descriptions runs to tens of kilobytes, and
+    // Windows caps an entire command line at 32,767 characters.
+    //
+    // The flag has to be --append-system-prompt-file. --append-system-prompt takes literal
+    // text, so handing it a path appends the path itself, and the prompt never reaches the
+    // model — silently, because a path is valid text.
     const tmpFile = join(
       tmpdir(),
       `pi-claude-cli-sysprompt-${process.pid}.txt`,
     );
     writeFileSync(tmpFile, systemPrompt, "utf-8");
-    args.push("--append-system-prompt", tmpFile);
+    args.push("--append-system-prompt-file", tmpFile);
   }
 
   if (options?.effort) {

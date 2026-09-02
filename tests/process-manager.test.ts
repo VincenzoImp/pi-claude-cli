@@ -91,13 +91,22 @@ describe("spawnClaude", () => {
     expect(options.cwd).toBe("/custom/path");
   });
 
-  it("writes system prompt to temp file and passes path via --append-system-prompt", () => {
+  it("writes system prompt to temp file and passes its path via --append-system-prompt-file", () => {
     spawnClaude("claude-sonnet-4-5-20250929", "You are a helpful assistant.");
     const args = (spawn as any).mock.calls[0][1] as string[];
 
-    expect(args).toContain("--append-system-prompt");
-    const idx = args.indexOf("--append-system-prompt");
+    expect(args).toContain("--append-system-prompt-file");
+    const idx = args.indexOf("--append-system-prompt-file");
     expect(args[idx + 1]).toContain("pi-claude-cli-sysprompt-");
+  });
+
+  // --append-system-prompt takes literal text. Passing it a path appends the path itself and
+  // the prompt never reaches the model, which is silent because a path is valid text.
+  it("never passes a path to the literal-text flag", () => {
+    spawnClaude("claude-sonnet-4-5-20250929", "You are a helpful assistant.");
+    const args = (spawn as any).mock.calls[0][1] as string[];
+
+    expect(args).not.toContain("--append-system-prompt");
   });
 
   it("temp file contains the system prompt text", () => {
@@ -110,9 +119,10 @@ describe("spawnClaude", () => {
     expect(readFileSync(tmpFile, "utf-8")).toBe("You are a helpful assistant.");
   });
 
-  it("does not include --append-system-prompt when no system prompt", () => {
+  it("does not include --append-system-prompt-file when no system prompt", () => {
     spawnClaude("claude-sonnet-4-5-20250929");
     const args = (spawn as any).mock.calls[0][1] as string[];
+    expect(args).not.toContain("--append-system-prompt-file");
     expect(args).not.toContain("--append-system-prompt");
   });
 
@@ -175,7 +185,7 @@ describe("effort flag", () => {
     });
     const args = (spawn as any).mock.calls[0][1] as string[];
 
-    expect(args).toContain("--append-system-prompt");
+    expect(args).toContain("--append-system-prompt-file");
     expect(args).not.toContain("--effort");
   });
 });
@@ -419,7 +429,7 @@ describe("mcp-config flag", () => {
     });
     const args = (spawn as any).mock.calls[0][1] as string[];
 
-    expect(args).toContain("--append-system-prompt");
+    expect(args).toContain("--append-system-prompt-file");
     expect(args).toContain("--effort");
     expect(args).not.toContain("--mcp-config");
     expect(args).toContain("--permission-prompt-tool");

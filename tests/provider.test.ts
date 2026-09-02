@@ -1891,6 +1891,7 @@ describe("streamViaCli", () => {
 
       const args = (spawn as any).mock.calls[0][1] as string[];
       expect(args).toContain("--resume");
+      expect(args).not.toContain("--append-system-prompt-file");
       expect(args).not.toContain("--append-system-prompt");
 
       // Clean up
