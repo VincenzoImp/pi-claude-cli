@@ -1,5 +1,17 @@
 # pi-claude-cli
 
+> **This is a maintained fork** of [rchern/pi-claude-cli](https://github.com/rchern/pi-claude-cli).
+> Published 0.3.1 has two defects that both fail silently: the entire system prompt is
+> discarded, and the resume prompt drops your question whenever an extension appends a message
+> after it — which is what pi's plan mode does, so plan mode answers nothing at all. Both are
+> fixed here, with tests, and offered upstream. Install a tagged release rather than `main`:
+>
+> ```
+> pi install git:github.com/VincenzoImp/pi-claude-cli@v0.3.1-pi-agent.1
+> ```
+>
+> Everything below is the upstream README, unchanged.
+
 A [pi](https://github.com/mariozechner/pi-coding-agent) extension that routes LLM calls through the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) as a subprocess. Use your Claude Pro/Max subscription as the LLM backend — no API key, no separate billing.
 
 ## How it works
