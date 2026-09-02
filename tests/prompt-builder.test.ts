@@ -924,6 +924,25 @@ describe("buildResumePrompt", () => {
     expect(buildResumePrompt(context)).toBe("Hello world");
   });
 
+  it("keeps the human's question when an extension appends its own user message", () => {
+    // pi's plan mode injects a "[PLAN MODE ACTIVE]" preamble as a user message after the
+    // human's. Starting from the last user message alone sent only the preamble, so the
+    // model was asked to plan with no task and answered with nothing.
+    const context = {
+      messages: [
+        { role: "user", content: "write me a plan" },
+        {
+          role: "user",
+          customType: "plan-mode-context",
+          content: "[PLAN MODE ACTIVE] read-only exploration",
+        },
+      ],
+    };
+    const prompt = buildResumePrompt(context);
+    expect(prompt).toContain("write me a plan");
+    expect(prompt).toContain("[PLAN MODE ACTIVE]");
+  });
+
   it("extracts only the last user message from a multi-turn conversation", () => {
     const context = {
       messages: [

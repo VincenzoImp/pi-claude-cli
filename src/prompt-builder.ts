@@ -165,10 +165,14 @@ export function buildResumePrompt(context: {
   const newMessages: any[] = [];
 
   // Walk backwards from finalUserIndex to find where new content starts.
-  // Include trailing toolResult messages that follow the last assistant turn.
+  // Include trailing toolResult messages that follow the last assistant turn, and any
+  // earlier user messages in the same turn: an extension can append its own user message
+  // after the human's one (pi's plan mode injects a "[PLAN MODE ACTIVE]" preamble that way).
+  // Starting at the LAST user message alone would send only that preamble and silently drop
+  // the question the human actually asked.
   let startIdx = finalUserIndex;
   for (let i = finalUserIndex - 1; i >= 0; i--) {
-    if (messages[i].role === "toolResult") {
+    if (messages[i].role === "toolResult" || messages[i].role === "user") {
       startIdx = i;
     } else {
       break;
