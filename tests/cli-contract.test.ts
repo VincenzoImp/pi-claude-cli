@@ -13,30 +13,30 @@
  * They skip when `claude` is not on PATH, so they are inert in an environment without the CLI.
  */
 
-import { execFileSync } from "node:child_process";
+import spawn from "cross-spawn";
 import { describe, expect, it } from "vitest";
 
-function claudeIsAvailable(): boolean {
-  try {
-    execFileSync("claude", ["--version"], { stdio: "pipe", timeout: 10000 });
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Runs the CLI and returns its combined output, whether it exits zero or not.
+ *
+ * cross-spawn rather than node:child_process for the same reason spawnClaude uses it: on
+ * Windows `claude` is a .cmd shim, which Node will not execute directly.
+ */
+function runClaude(args: string[]): string {
+  const result = spawn.sync("claude", args, {
+    encoding: "utf-8",
+    timeout: 20000,
+  });
+  if (result.error) return String(result.error.message ?? result.error);
+  return `${result.stdout ?? ""}${result.stderr ?? ""}`;
 }
 
-/** Runs the CLI and returns its combined output, whether it exits zero or not. */
-function runClaude(args: string[]): string {
-  try {
-    return execFileSync("claude", args, {
-      encoding: "utf-8",
-      stdio: "pipe",
-      timeout: 20000,
-    });
-  } catch (error) {
-    const e = error as { stdout?: string; stderr?: string; message?: string };
-    return `${e.stdout ?? ""}${e.stderr ?? ""}${e.message ?? ""}`;
-  }
+function claudeIsAvailable(): boolean {
+  const result = spawn.sync("claude", ["--version"], {
+    encoding: "utf-8",
+    timeout: 10000,
+  });
+  return !result.error && result.status === 0;
 }
 
 const MISSING = "/pi-claude-cli-does-not-exist-9f3a2b.txt";
